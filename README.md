@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reporte Diario · Sistema Anual · Club El Nogal</title>
+<title>Reporte Diario · Sistema Anual · Direccion De Seguridad Club El Nogal</title>
 <style>
 :root{
   --carbon:#14181B; --panel:#1C2125; --panel2:#22282D; --line:#2E353B;
