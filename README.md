@@ -444,6 +444,16 @@ footer{border-top:1px solid var(--line);margin-top:40px}
       <button class="fbtn" onclick="vipDicRestore()">Restaurar diccionario por defecto</button>
     </div>
     <div id="vipDicList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px;max-height:300px;overflow-y:auto"></div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+      <div style="font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);font-weight:600;margin-bottom:8px">Lugares excluidos del análisis VIP</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <input type="text" id="vipNewLug" placeholder="Ej: CENTRO ADMINISTRATIVO" style="min-width:240px" onkeydown="if(event.key==='Enter')vipLugAdd()">
+        <button class="fbtn" onclick="vipLugAdd()">＋ Excluir lugar</button>
+        <button class="fbtn" onclick="vipLugRestore()">Restaurar por defecto</button>
+      </div>
+      <div id="vipLugList" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <div class="hint">Los registros cuyo lugar coincida con esta lista (p. ej. visitas al Centro Administrativo) no se cuentan como visitas VIP.</div>
+    </div>
     <div class="hint" id="vipExclList" style="margin-top:10px"></div>
   </div>
 
@@ -1172,53 +1182,79 @@ function importRows(rows,fname){
 }
 
 /* ================== MÓDULO VIP / PERSONALIDADES ================== */
-const VIP_CATS=["Gobierno Nacional","Gobierno Local","Diplomático / Embajadas","Justicia / Magistrados","Fuerza Pública","Empresarial / CEO","Organismos Internacionales","Personalidades Públicas","Otros VIP"];
+const VIP_CATS=["Gobierno Nacional","Candidatos / Electoral","Gobierno Local","Diplomático / Embajadas","Justicia / Magistrados","Fuerza Pública / Cúpula Militar","Avanzadas / Esquemas de Seguridad","Organismos Internacionales","Personalidades Públicas","Empresarial (solo nombres manuales)","Otros VIP"];
 // Diccionario por defecto: t=término (sin tildes), c=categoría, s=peso, i=institución, b=coincidencia por palabra completa
 const VIPDIC_DEF=[
+ // --- Gobierno Nacional ---
  {t:"PRESIDENTE DE LA REPUBLICA",c:"Gobierno Nacional",s:"alto"},{t:"SEÑOR PRESIDENTE",c:"Gobierno Nacional",s:"alto"},
  {t:"EXPRESIDENTE",c:"Gobierno Nacional",s:"alto"},{t:"EX PRESIDENTE",c:"Gobierno Nacional",s:"alto"},
  {t:"VICEPRESIDENT",c:"Gobierno Nacional",s:"alto"},{t:"PRIMERA DAMA",c:"Gobierno Nacional",s:"alto"},
  {t:"ESPOSA DEL PRESIDENTE",c:"Gobierno Nacional",s:"alto"},{t:"MINISTR",c:"Gobierno Nacional",s:"alto"},
+ {t:"EXMINISTR",c:"Gobierno Nacional",s:"alto"},{t:"EX MINISTR",c:"Gobierno Nacional",s:"alto"},
  {t:"VICEMINISTR",c:"Gobierno Nacional",s:"alto"},{t:"SENADOR",c:"Gobierno Nacional",s:"alto"},
  {t:"REPRESENTANTE A LA CAMARA",c:"Gobierno Nacional",s:"alto"},{t:"CONGRESISTA",c:"Gobierno Nacional",s:"alto"},
  {t:"CANCILLER",c:"Gobierno Nacional",s:"alto"},{t:"CANCILLERIA",c:"Gobierno Nacional",s:"medio",i:1},
- {t:"MIEMBRO DE GOBIERNO",c:"Gobierno Nacional",s:"medio"},
- {t:"ALCALDE",c:"Gobierno Local",s:"alto"},{t:"ALCALDIA",c:"Gobierno Local",s:"medio",i:1},
- {t:"GOBERNADOR",c:"Gobierno Local",s:"alto"},{t:"GOBERNACION",c:"Gobierno Local",s:"medio",i:1},
- {t:"CONCEJAL",c:"Gobierno Local",s:"alto"},{t:"CONCEJO DE BOGOTA",c:"Gobierno Local",s:"medio",i:1},
+ {t:"REGISTRADOR NACIONAL",c:"Gobierno Nacional",s:"alto"},{t:"DEFENSOR DEL PUEBLO",c:"Gobierno Nacional",s:"alto"},
+ // --- Candidatos / Electoral ---
+ {t:"CANDIDATO PRESIDENCIAL",c:"Candidatos / Electoral",s:"alto"},{t:"CANDIDATA PRESIDENCIAL",c:"Candidatos / Electoral",s:"alto"},
+ {t:"CANDIDATO A LA PRESIDENCIA",c:"Candidatos / Electoral",s:"alto"},{t:"PRECANDIDATO",c:"Candidatos / Electoral",s:"alto"},
+ {t:"CANDIDATO A LA ALCALDIA",c:"Candidatos / Electoral",s:"alto"},{t:"CANDIDATO AL SENADO",c:"Candidatos / Electoral",s:"alto"},
+ {t:"CANDIDATO",c:"Candidatos / Electoral",s:"medio",b:1},{t:"CAMPAÑA PRESIDENCIAL",c:"Candidatos / Electoral",s:"alto"},
+ // --- Gobierno Local ---
+ {t:"ALCALDE",c:"Gobierno Local",s:"alto"},{t:"EXALCALDE",c:"Gobierno Local",s:"alto"},
+ {t:"GOBERNADOR",c:"Gobierno Local",s:"alto"},{t:"EXGOBERNADOR",c:"Gobierno Local",s:"alto"},
+ {t:"CONCEJAL",c:"Gobierno Local",s:"alto"},{t:"DIPUTADO",c:"Gobierno Local",s:"alto"},
+ {t:"PERSONERO",c:"Gobierno Local",s:"medio"},{t:"SECRETARIO DE GOBIERNO",c:"Gobierno Local",s:"medio"},
+ // --- Diplomático ---
  {t:"EMBAJADOR",c:"Diplomático / Embajadas",s:"alto"},{t:"EMBAJADA",c:"Diplomático / Embajadas",s:"medio",i:1},
  {t:"CONSUL",c:"Diplomático / Embajadas",s:"alto",b:1},{t:"CONSULADO",c:"Diplomático / Embajadas",s:"medio",i:1},
  {t:"DELEGACION DIPLOMATICA",c:"Diplomático / Embajadas",s:"alto",i:1},{t:"CUERPO DIPLOMATICO",c:"Diplomático / Embajadas",s:"alto",i:1},
+ // --- Justicia ---
  {t:"MAGISTRAD",c:"Justicia / Magistrados",s:"alto"},{t:"FISCAL GENERAL",c:"Justicia / Magistrados",s:"alto"},
- {t:"FISCAL",c:"Justicia / Magistrados",s:"bajo",b:1},{t:"PROCURADOR",c:"Justicia / Magistrados",s:"alto"},
- {t:"CONTRALOR",c:"Justicia / Magistrados",s:"alto"},{t:"CORTE CONSTITUCIONAL",c:"Justicia / Magistrados",s:"alto",i:1},
- {t:"CORTE SUPREMA",c:"Justicia / Magistrados",s:"alto",i:1},{t:"CONSEJO DE ESTADO",c:"Justicia / Magistrados",s:"alto",i:1},
- {t:"COMANDANTE",c:"Fuerza Pública",s:"medio"},{t:"GENERAL",c:"Fuerza Pública",s:"bajo",b:1},
- {t:"CORONEL",c:"Fuerza Pública",s:"medio",b:1},{t:"BRIGADIER",c:"Fuerza Pública",s:"medio"},
- {t:"POLICIA NACIONAL",c:"Fuerza Pública",s:"bajo",i:1},{t:"EJERCITO NACIONAL",c:"Fuerza Pública",s:"medio",i:1},
- {t:"ARMADA NACIONAL",c:"Fuerza Pública",s:"medio",i:1},{t:"FUERZA AEREA",c:"Fuerza Pública",s:"medio",i:1},
- {t:"CEO",c:"Empresarial / CEO",s:"medio",b:1},{t:"PRESIDENTE DE LA COMPANIA",c:"Empresarial / CEO",s:"alto"},
- {t:"PRESIDENTE EJECUTIVO",c:"Empresarial / CEO",s:"alto"},{t:"ALTA DIRECCION",c:"Empresarial / CEO",s:"medio"},
- {t:"GERENTE GENERAL",c:"Empresarial / CEO",s:"medio"},{t:"JUNTA DIRECTIVA",c:"Empresarial / CEO",s:"bajo"},
- {t:"DIRECTOR",c:"Empresarial / CEO",s:"bajo",b:1},{t:"GERENTE",c:"Empresarial / CEO",s:"bajo",b:1},
+ {t:"PROCURADOR",c:"Justicia / Magistrados",s:"alto"},{t:"CONTRALOR",c:"Justicia / Magistrados",s:"alto"},
+ {t:"CORTE CONSTITUCIONAL",c:"Justicia / Magistrados",s:"alto",i:1},{t:"CORTE SUPREMA",c:"Justicia / Magistrados",s:"alto",i:1},
+ {t:"CONSEJO DE ESTADO",c:"Justicia / Magistrados",s:"alto",i:1},
+ // --- Fuerza Pública / Cúpula Militar ---
+ {t:"GENERAL DE LA POLICIA",c:"Fuerza Pública / Cúpula Militar",s:"alto"},{t:"GENERAL DEL EJERCITO",c:"Fuerza Pública / Cúpula Militar",s:"alto"},
+ {t:"DIRECTOR DE LA POLICIA",c:"Fuerza Pública / Cúpula Militar",s:"alto"},{t:"COMANDANTE DEL EJERCITO",c:"Fuerza Pública / Cúpula Militar",s:"alto"},
+ {t:"COMANDANTE DE LAS FUERZAS MILITARES",c:"Fuerza Pública / Cúpula Militar",s:"alto"},
+ {t:"MAYOR GENERAL",c:"Fuerza Pública / Cúpula Militar",s:"alto"},{t:"BRIGADIER GENERAL",c:"Fuerza Pública / Cúpula Militar",s:"alto"},
+ {t:"CUPULA MILITAR",c:"Fuerza Pública / Cúpula Militar",s:"alto"},{t:"ALMIRANTE",c:"Fuerza Pública / Cúpula Militar",s:"alto"},
+ {t:"GENERAL",c:"Fuerza Pública / Cúpula Militar",s:"medio",b:1},{t:"CORONEL",c:"Fuerza Pública / Cúpula Militar",s:"medio",b:1},
+ {t:"COMANDANTE",c:"Fuerza Pública / Cúpula Militar",s:"bajo",b:1},
+ // --- Organismos Internacionales ---
  {t:"ONU",c:"Organismos Internacionales",s:"alto",b:1,i:1},{t:"NACIONES UNIDAS",c:"Organismos Internacionales",s:"alto",i:1},
  {t:"OEA",c:"Organismos Internacionales",s:"alto",b:1,i:1},{t:"BANCO MUNDIAL",c:"Organismos Internacionales",s:"alto",i:1},
  {t:"BID",c:"Organismos Internacionales",s:"alto",b:1,i:1},{t:"CAF",c:"Organismos Internacionales",s:"medio",b:1,i:1},
+ // --- Personalidades públicas y señales de presencia VIP ---
  {t:"PERSONALIDAD PUBLICA",c:"Personalidades Públicas",s:"alto"},{t:"PERSONALIDAD",c:"Personalidades Públicas",s:"medio",b:1},
- {t:"INVITADO ESPECIAL",c:"Personalidades Públicas",s:"medio"},{t:"FUNCIONARIO DE ALTO NIVEL",c:"Otros VIP",s:"alto"},
- {t:"AUTORIDAD",c:"Otros VIP",s:"bajo",b:1},{t:"VIP",c:"Otros VIP",s:"medio",b:1},
- {t:"ESQUEMA DE SEGURIDAD",c:"Otros VIP",s:"medio"},{t:"UNP",c:"Otros VIP",s:"medio",b:1,i:1}
+ {t:"FUNCIONARIO DE ALTO NIVEL",c:"Otros VIP",s:"alto"},{t:"VIP",c:"Otros VIP",s:"medio",b:1},
+ // --- Avanzadas y esquemas de seguridad (señal de visita VIP) ---
+ {t:"AVANZADA PRESIDENCIAL",c:"Avanzadas / Esquemas de Seguridad",s:"alto"},
+ {t:"AVANZADA DE SEGURIDAD",c:"Avanzadas / Esquemas de Seguridad",s:"alto"},
+ {t:"AVANZADA",c:"Avanzadas / Esquemas de Seguridad",s:"medio",b:1},
+ {t:"CASA MILITAR",c:"Avanzadas / Esquemas de Seguridad",s:"alto",i:1},
+ {t:"SEGURIDAD PRESIDENCIAL",c:"Avanzadas / Esquemas de Seguridad",s:"alto",i:1},
+ {t:"CARAVANA PRESIDENCIAL",c:"Avanzadas / Esquemas de Seguridad",s:"alto"},
+ {t:"ESQUEMA DE SEGURIDAD",c:"Avanzadas / Esquemas de Seguridad",s:"medio"},
+ {t:"UNP",c:"Avanzadas / Esquemas de Seguridad",s:"medio",b:1,i:1},
+ {t:"ESCOLTAS",c:"Avanzadas / Esquemas de Seguridad",s:"bajo"}
 ];
 // Frases que se descartan antes de buscar (evitan falsos positivos)
-const VIP_EXCL_FRASES=["MALESTAR GENERAL","ASEO GENERAL","LIMPIEZA GENERAL","REVISION GENERAL","INSPECCION GENERAL","ESTADO GENERAL","MANTENIMIENTO GENERAL","SERVICIOS GENERALES","EN GENERAL","REGLA GENERAL","VISTA GENERAL","RONDA GENERAL","APAGADO GENERAL","CORTE GENERAL DE ENERGIA","ASAMBLEA GENERAL ORDINARIA"];
+// Lugares administrativos excluidos del análisis VIP (editable en Configuración)
+const VIP_LUG_DEF=["CENTRO ADMINISTRATIVO","C.A.","OFICINAS ADMINISTRATIVAS","OFICINA ADMINISTRATIVA","GERENCIA GENERAL"];
+let VIPLUG;try{VIPLUG=JSON.parse(localStorage.getItem("nogal_vip_lug"))}catch(e){VIPLUG=null}
+if(!VIPLUG)VIPLUG=[...VIP_LUG_DEF];
+const VIP_EXCL_FRASES=["MALESTAR GENERAL","ASEO GENERAL","LIMPIEZA GENERAL","REVISION GENERAL","INSPECCION GENERAL","ESTADO GENERAL","MANTENIMIENTO GENERAL","SERVICIOS GENERALES","EN GENERAL","REGLA GENERAL","VISTA GENERAL","RONDA GENERAL","APAGADO GENERAL","CORTE GENERAL DE ENERGIA","ASAMBLEA GENERAL ORDINARIA","HORA AVANZADA","EDAD AVANZADA","AVANZADA LA NOCHE","AVANZADA LA TARDE","TECNOLOGIA AVANZADA"];
 
 let VIPDIC, VIPNO;
-try{VIPDIC=JSON.parse(localStorage.getItem("nogal_vip_dic"))}catch(e){VIPDIC=null}
+try{VIPDIC=JSON.parse(localStorage.getItem("nogal_vip_dic2"))}catch(e){VIPDIC=null}
 if(!VIPDIC||!VIPDIC.length)VIPDIC=JSON.parse(JSON.stringify(VIPDIC_DEF));
 try{VIPNO=JSON.parse(localStorage.getItem("nogal_vip_no")||"{}")}catch(e){VIPNO={}}
 let VIPCONF=localStorage.getItem("nogal_vip_conf")||"";
 function vipPersist(){
-  try{localStorage.setItem("nogal_vip_dic",JSON.stringify(VIPDIC));
+  try{localStorage.setItem("nogal_vip_dic2",JSON.stringify(VIPDIC));
+      localStorage.setItem("nogal_vip_lug",JSON.stringify(VIPLUG));
       localStorage.setItem("nogal_vip_no",JSON.stringify(VIPNO));
       localStorage.setItem("nogal_vip_conf",VIPCONF)}catch(e){}
 }
@@ -1230,8 +1266,13 @@ function detectVIP(r){
   const key=keyOf(r);
   if(VIPCACHE.has(key))return VIPCACHE.get(key);
   let out;
+  const lugN=vipNorm(r.lugar||"");
+  const lugExcl=VIPLUG.some(l=>{const t=vipNorm(l);
+    return t.length<=4?new RegExp("(^|[^A-Z])"+t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"($|[^A-Z])").test(lugN):lugN.includes(t)});
   if(VIPNO[key]){
     out={isVIP:false,category:"",detectedTerms:[],institution:"",confidence:"",reason:"Excluido manualmente"};
+  }else if(lugExcl){
+    out={isVIP:false,category:"",detectedTerms:[],institution:"",confidence:"",reason:"Lugar administrativo excluido del análisis VIP"};
   }else{
     let txt=vipNorm([r.desc,r.lugar,r.perfil,r.traz,r.asunto].join(" | "));
     VIP_EXCL_FRASES.forEach(f=>{txt=txt.split(f).join(" ")});
@@ -1372,6 +1413,10 @@ function renderVipDic(){
       <span style="color:var(--ink3);font-size:10.5px">${esc(d.c)}${d.i?" · inst.":""}</span>
       <button class="del" title="Eliminar" onclick="vipDicDel(${idx})">×</button></div>`;
   }).join("");
+  document.getElementById("vipLugList").innerHTML=VIPLUG.map((l,i)=>
+    `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:4px 8px;font-size:11.5px;color:var(--ink2)">${esc(l)}
+     <button onclick="vipLugDel(${i})" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:13px;line-height:1">×</button></span>`).join("")||
+    '<span class="hint">Sin lugares excluidos.</span>';
   const ex=Object.keys(VIPNO);
   document.getElementById("vipExclList").innerHTML=ex.length?
     "<b>Exclusiones manuales ("+ex.length+"):</b> "+ex.map(k=>
@@ -1400,6 +1445,22 @@ function vipDicRestore(){
   if(!confirm("Se restaurará el diccionario VIP por defecto (se pierden los términos personalizados). ¿Continuar?"))return;
   VIPDIC=JSON.parse(JSON.stringify(VIPDIC_DEF));VIPCACHE.clear();vipPersist();renderVipDic();renderDireccion();
   toast("Diccionario restaurado");
+}
+function vipLugAdd(){
+  const v=vipNorm(document.getElementById("vipNewLug").value.trim());
+  if(!v){toast("Escriba el lugar a excluir");return}
+  if(VIPLUG.some(l=>vipNorm(l)===v)){toast("Ese lugar ya está excluido");return}
+  VIPLUG.push(v);VIPCACHE.clear();vipPersist();renderVipDic();renderDireccion();
+  document.getElementById("vipNewLug").value="";
+  toast("«"+v+"» excluido del análisis VIP");
+}
+function vipLugDel(i){
+  VIPLUG.splice(i,1);VIPCACHE.clear();vipPersist();renderVipDic();renderDireccion();
+  toast("Lugar restaurado al análisis");
+}
+function vipLugRestore(){
+  VIPLUG=[...VIP_LUG_DEF];VIPCACHE.clear();vipPersist();renderVipDic();renderDireccion();
+  toast("Lista de lugares excluidos restaurada");
 }
 function vipRestaurar(key){delete VIPNO[key];VIPCACHE.delete(key);vipPersist();renderVipDic();renderDireccion();toast("Registro restaurado al análisis VIP")}
 
