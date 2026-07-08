@@ -1,8 +1,9 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reporte Diario · Sistema Anual · Direccion De Seguridad Club El Nogal</title>
+<title>Reporte Diario · Sistema Anual · Dirección de Seguridad · Club El Nogal</title>
 <style>
 :root{
   --carbon:#14181B; --panel:#1C2125; --panel2:#22282D; --line:#2E353B;
@@ -21,7 +22,9 @@ body{background:var(--carbon);color:var(--ink);font-family:var(--sans);font-size
 header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#181D21,#14181B);position:sticky;top:0;z-index:50}
 .hwrap{max-width:1500px;margin:0 auto;padding:12px 26px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .brand{display:flex;align-items:baseline;gap:12px}
-.brand .club{font-family:var(--serif);font-size:25px;font-weight:600;letter-spacing:.04em;color:var(--brass2)}
+.brand .brandstack{display:flex;flex-direction:column;line-height:1.05}
+.brand .club{font-family:var(--serif);font-size:24px;font-weight:600;letter-spacing:.04em;color:var(--brass2)}
+.brand .club2{font-family:var(--serif);font-size:12.5px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--brass2);margin-top:2px}
 .brand .app{font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink2);border-left:1px solid var(--line);padding-left:12px}
 .mespick{display:flex;align-items:center;gap:8px}
 .mespick select{background:var(--panel2);border:1px solid var(--brass);color:var(--brass2);font-family:var(--mono);font-size:12.5px;padding:7px 10px;border-radius:3px;cursor:pointer;letter-spacing:.05em}
@@ -259,8 +262,11 @@ footer{border-top:1px solid var(--line);margin-top:40px}
 <header>
   <div class="hwrap">
     <div class="brand">
-      <span class="club">Club El Nogal</span>
-      <span class="app">Reporte Diario</span>
+      <div class="brandstack">
+        <span class="club">Club El Nogal</span>
+        <span class="club2">Dirección de Seguridad</span>
+      </div>
+      <span class="app">Reporte Diario · Sistema Anual</span>
     </div>
     <div class="mespick">
       <select id="mesSel" onchange="setMes(this.value)"></select>
@@ -516,7 +522,7 @@ footer{border-top:1px solid var(--line);margin-top:40px}
 
 <footer>
   <div class="fwrap">
-    <span>Club El Nogal · Gerencia de Seguridad · Sistema anual de reporte diario</span>
+    <span>Club El Nogal · Dirección de Seguridad · Sistema anual de reporte diario</span>
     <span>
       <a href="#" onclick="exportCSV(filtered());return false">Exportar filtrado</a> ·
       <a href="#" onclick="window.print();return false">Imprimir</a>
